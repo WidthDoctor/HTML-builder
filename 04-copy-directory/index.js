@@ -17,7 +17,15 @@ const copyFile = (sourcePath, targetPath) => {
 // Функция копирования папки
 const copyFolder = async (source, target) => {
   try {
-    // Создание целевой папки, если ее еще нет
+    // Проверка наличия целевой папки и удаление ее содержимого, если она уже существует
+    try {
+      await fs.promises.access(target);
+      await fs.promises.rmdir(target, { recursive: true });
+    } catch (error) {
+      // Целевая папка не существует или не доступна
+    }
+
+    // Создание целевой папки
     await fs.promises.mkdir(target, { recursive: true });
 
     // Получение списка файлов и папок в исходной папке
@@ -38,20 +46,6 @@ const copyFolder = async (source, target) => {
     console.error(err);
   }
 };
-
 // Копирование папки в начале программы
 copyFolder(sourceFolder, targetFolder);
-
-// Отслеживание изменений в папке и повторное копирование при необходимости
-fs.watch(sourceFolder, { recursive: true }, async (eventType, filename) => {
-    if (eventType === 'change') {
-      console.log(`Detected change in ${filename}. Copying file again...`);
-      const sourcePath = path.join(sourceFolder, filename);
-      const targetPath = path.join(targetFolder, filename);
-      await copyFile(sourcePath, targetPath);
-    } else {
-      console.log(`Detected ${eventType} event in ${filename}. Copying folder again...`);
-      await copyFolder(sourceFolder, targetFolder);
-    }
-  });
 
